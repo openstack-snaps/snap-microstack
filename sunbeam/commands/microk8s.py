@@ -153,7 +153,7 @@ class EnableMetalLB(BaseCoreMicroK8sEnableStep):
     """Enable metallb for microk8s"""
 
     def __init__(self):
-        super().__init__("metallb", "10.20.20.1-10.20.20.2")
+        super().__init__("metallb", "10.20.20.1/29")
 
     def has_prompts(self) -> bool:
         return True
