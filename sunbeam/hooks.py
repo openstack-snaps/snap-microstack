@@ -26,6 +26,8 @@ DEFAULT_CONFIG = {
     "snap.channel.juju": "3.0/stable",
     "snap.channel.microk8s": "1.25-strict/stable",
     "snap.channel.openstack-hypervisor": "xena/edge",
+    "microk8s.dns": "8.8.8.8,8.8.4.4",
+    "microk8s.metallb": "10.20.20.1/29"
 }
 
 
