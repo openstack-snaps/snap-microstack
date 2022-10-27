@@ -22,7 +22,7 @@ from rich.console import Console
 from snaphelpers import Snap
 
 from sunbeam import utils
-from sunbeam.commands import juju, microk8s  # noqa: H301
+from sunbeam.commands import juju, microk8s, ohv  # noqa: H301
 from sunbeam.jobs.common import ResultType
 
 LOG = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ def init(auto: bool, role: str) -> None:
     node_role = Role[role.upper()]
     microk8s_channel = snap.config.get("snap.channel.microk8s")
     juju_channel = snap.config.get("snap.channel.juju")
+    ohv_channel = snap.config.get("snap.channel.openstack-hypervisor")
 
     LOG.debug(f"Initialising: auto {auto}, role {role}")
 
@@ -143,6 +144,7 @@ def init(auto: bool, role: str) -> None:
 
     if node_role.is_compute_node():
         LOG.debug("This is where we would append steps for the compute node")
+        plan.append(ohv.EnsureOVHInstalled(channel=ohv_channel))
 
     for step in plan:
         LOG.debug(f"Starting step {step.name}")
@@ -172,11 +174,14 @@ def init(auto: bool, role: str) -> None:
         console.print(f"{message}[green]Done[/green]")
 
     console.print(f"Node has been initialised as a [bold]{role}[/bold] node")
-    console.print(
-        "\nRun following commands to bootstrap:\n"
-        "  newgrp snap_microk8s\n"
-        "  microstack bootstrap"
-    )
+    console.print("\nRun following commands to bootstrap:\n")
+    if node_role.is_compute_node():
+        # TODO(hemanth): snap connect should be done via plan
+        console.print(
+            "  sudo snap connect microstack:hypervisor-config "
+            "openstack-hypervisor:hypervisor-config\n"
+        )
+    console.print("  newgrp snap_microk8s\n  microstack bootstrap")
 
 
 if __name__ == "__main__":

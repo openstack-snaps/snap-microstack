@@ -25,6 +25,7 @@ DEFAULT_CONFIG = {
     "node.role": "CONVERGED",
     "snap.channel.juju": "3.0/stable",
     "snap.channel.microk8s": "1.25-strict/stable",
+    "snap.channel.openstack-hypervisor": "xena/edge",
 }
 
 

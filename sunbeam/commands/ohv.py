@@ -19,7 +19,7 @@ import operator
 from typing import Optional
 
 from sunbeam.commands.juju import JujuHelper
-from sunbeam.jobs.common import BaseStep, Result, ResultType
+from sunbeam.jobs.common import BaseStep, InstallSnapStep, Result, ResultType
 from sunbeam.ohv_config.client import Client as ohvClient
 from sunbeam.ohv_config.config import (
     IdentityServiceConfig,
@@ -107,6 +107,13 @@ class OHVBaseStep(BaseStep):
             return Result(ResultType.FAILED, str(e))
 
         return Result(ResultType.COMPLETED)
+
+
+class EnsureOVHInstalled(InstallSnapStep):
+    """Validates the openstack-hypervisor is installed."""
+
+    def __init__(self, channel: str = "latest/stable"):
+        super().__init__(snap="openstack-hypervisor", channel=channel)
 
 
 class UpdateIdentityServiceConfigStep(OHVBaseStep):

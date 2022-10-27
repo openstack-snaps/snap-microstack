@@ -216,7 +216,7 @@ class InstallSnapStep(BaseStep):
             if self._is_valid_version(version):
                 return True
 
-            LOG.debug("The installed Juju is too old.")
+            LOG.debug(f"The installed {self.snap} is too old.")
             raise click.ClickException(
                 f"The installed version of {self.snap} ({inst_snap.version}) "
                 f"is too old. Install a version newer than "
