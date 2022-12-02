@@ -35,6 +35,7 @@ from sunbeam.commands.terraform import (
     TerraformInitStep,
 )
 from sunbeam.jobs.common import BaseStep, Result, ResultType, Status
+from sunbeam import utils
 
 LOG = logging.getLogger(__name__)
 console = Console()
@@ -55,6 +56,11 @@ def user_questions():
         ),
         "security_group_rules": question_helper.ConfirmQuestion(
             "Setup security group rules for SSH and ICMP ingress", default_value=True
+        ),
+        "remote_access_location": question_helper.ConfirmQuestion(
+            "Local or remote access to VMs",
+            choices=[utils.LOCAL_ACCESS, utils.REMOTE_ACCESS],
+            default_value=utils.LOCAL_ACCESS,
         ),
     }
 
@@ -86,8 +92,43 @@ def ext_net_questions():
         "segmentation_id": question_helper.PromptQuestion(
             "VLAN ID to use for external network", default_value=0
         ),
-        "enable_host_only_networking": question_helper.ConfirmQuestion(
-            "Enable access to floating IP's from local host only", default_value=True
+    }
+
+
+def ext_net_questions_local_only():
+    return {
+        "cidr": question_helper.PromptQuestion(
+            (
+                "CIDR of network to use for external networking. (This network "
+                "is exclusively for microstacks use and not exist anywhere else on "
+                "the local network)"
+            ),
+            default_value="10.20.20.0/24",
+        ),
+        "gateway": question_helper.PromptQuestion(
+            (
+                "IP address microstack will assign for traffic to/from external"
+                "network. (This address should be currently unassigned.)"
+            ),
+            default_value=None,
+        ),
+        "start": question_helper.PromptQuestion(
+            "Start of IP allocation range for external network", default_value=None
+        ),
+        "end": question_helper.PromptQuestion(
+            "End of IP allocation range for external network", default_value=None
+        ),
+        "physical_network": question_helper.PromptQuestion(
+            "Neutron label for physical network to map to external network",
+            default_value="physnet1",
+        ),
+        "network_type": question_helper.PromptQuestion(
+            "Network type for access to external network",
+            choices=["flat", "vlan"],
+            default_value="flat",
+        ),
+        "segmentation_id": question_helper.PromptQuestion(
+            "VLAN ID to use for external network", default_value=0
         ),
     }
 
@@ -255,15 +296,27 @@ class ConfigureCloudStep(BaseStep):
         self.variables["user"][
             "security_group_rules"
         ] = user_bank.security_group_rules.ask()
+        self.variables["user"][
+            "remote_access_location"
+        ] = user_bank.remote_access_location.ask()
 
         # External Network Configuration
-        ext_net_bank = question_helper.QuestionBank(
-            questions=ext_net_questions(),
-            console=console,
-            preseed=preseed.get("external_network"),
-            previous_answers=self.variables.get("external_network"),
-            accept_defaults=self.accept_defaults,
-        )
+        if self.variables["user"]["remote_access_location"] == utils.LOCAL_ACCESS:
+            ext_net_bank = question_helper.QuestionBank(
+                questions=ext_net_questions_local_only(),
+                console=console,
+                preseed=preseed.get("external_network"),
+                previous_answers=self.variables.get("external_network"),
+                accept_defaults=self.accept_defaults,
+            )
+        else:
+            ext_net_bank = question_helper.QuestionBank(
+                questions=ext_net_questions(),
+                console=console,
+                preseed=preseed.get("external_network"),
+                previous_answers=self.variables.get("external_network"),
+                accept_defaults=self.accept_defaults,
+            )
         self.variables["external_network"]["cidr"] = ext_net_bank.cidr.ask()
         external_network = ipaddress.ip_network(
             self.variables["external_network"]["cidr"]
@@ -301,9 +354,6 @@ class ConfigureCloudStep(BaseStep):
         else:
             self.variables["external_network"]["segmentation_id"] = 0
 
-        self.variables["external_network"][
-            "enable_host_only_networking"
-        ] = ext_net_bank.enable_host_only_networking.ask()
         LOG.debug(self.variables)
         question_helper.write_answers(self.variables)
 

@@ -24,6 +24,8 @@ from semver import VersionInfo
 
 UNKNOWN_VERSION = VersionInfo(0, 0, 0)
 
+LOCAL_ACCESS = "local"
+REMOTE_ACCESS = "remote"
 
 def has_superuser_privileges() -> bool:
     """Determines if the current user has superuser privileges.
