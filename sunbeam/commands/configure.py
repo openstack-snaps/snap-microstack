@@ -390,6 +390,11 @@ def configure(
 
     model = snap.config.get("control-plane.model")
     jhelper = JujuHelper()
+    models = asyncio.get_event_loop().run_until_complete(jhelper.get_models())
+    LOG.debug(f"Juju models: {models}")
+    if model not in models:
+        LOG.error(f"Expected model {model} missing")
+        raise click.ClickException("Please run `microstack bootstrap` first")
     admin_credentials = _retrieve_admin_credentials(jhelper, model)
     ext_network_file = (
         snap.paths.user_common / "etc" / "configure" / "terraform.tfvars.json"
