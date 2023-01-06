@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import shutil
 
 from snaphelpers import Snap
 
@@ -59,11 +58,6 @@ def install(snap: Snap) -> None:
     """
     setup_logging(snap.paths.common / "hooks.log")
     LOG.debug("Running install hook...")
-    src = snap.paths.snap / "etc" / "bundles"
-    dst = snap.paths.common / "etc" / "bundles"
-    LOG.debug(f"Copying {src} to {dst}...")
-    shutil.copytree(src, dst)
-
     logging.info(f"Setting default config: {DEFAULT_CONFIG}")
     snap.config.set(DEFAULT_CONFIG)
 
@@ -79,10 +73,6 @@ def upgrade(snap: Snap) -> None:
     """
     setup_logging(snap.paths.common / "hooks.log")
     LOG.debug("Running the upgrade hook...")
-    src = snap.paths.snap / "etc" / "bundles"
-    dst = snap.paths.common / "etc" / "bundles"
-    LOG.debug(f"Updating {dst} from {src}...")
-    shutil.copytree(src, dst, dirs_exist_ok=True)
 
 
 def configure(snap: Snap) -> None:

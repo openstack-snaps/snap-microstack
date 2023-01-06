@@ -43,6 +43,9 @@ class PurgeTerraformStateStep(BaseStep):
         configure_dir = snap.paths.user_common / "etc" / "configure"
         if configure_dir.exists():
             shutil.rmtree(path=configure_dir)
+        deploy_dir = snap.paths.user_common / "etc" / "deploy"
+        if deploy_dir.exists():
+            shutil.rmtree(path=deploy_dir)
         return Result(ResultType.COMPLETED)
 
 

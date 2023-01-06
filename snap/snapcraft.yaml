@@ -1,10 +1,10 @@
 name: microstack
-base: core20
+base: core22
 summary: Dead simple OpenStack installation
 license: Apache-2.0
 description: |
   Microstack aims to provide a scalable, simple to deploy OpenStack solution.
-version: xena
+version: yoga
 
 confinement: strict
 grade: devel
@@ -26,6 +26,8 @@ apps:
       - network
       - network-bind
       - ssh-public-keys
+    environment:
+      PATH: $PATH:$SNAP/juju/bin
 
   terraform:
     command: bin/terraform
@@ -34,6 +36,8 @@ apps:
       - network
       - ssh-public-keys
       - juju-client-observe
+    environment:
+      PATH: $PATH:$SNAP/juju/bin
 
 parts:
   microstack:
@@ -41,22 +45,18 @@ parts:
     source: .
     build-packages:
       - git
-    requirements:
+    python-requirements:
       - requirements.txt
     override-build: |
-      snapcraftctl build
+      craftctl default
       snap-helpers write-hooks
-
-  bundles:
-    plugin: dump
-    source: bundles/
 
   terraform:
     plugin: go
     source: https://github.com/hashicorp/terraform
     source-depth: 1
     source-type: git
-    source-tag: "v1.3.4"
+    source-tag: "v1.3.7"
     build-snaps: [go]
     build-environment:
       - CGO_ENABLED: "0"
@@ -74,9 +74,24 @@ parts:
     after: [terraform]
     source: configure/
     override-build: |
-      snapcraftctl build
+      craftctl default
       cd $SNAPCRAFT_PART_INSTALL/etc/configure
       $SNAPCRAFT_STAGE/bin/terraform providers mirror $SNAPCRAFT_STAGE/terraform-providers
+
+  deploy:
+    plugin: dump
+    after: [terraform]
+    source: https://github.com/openstack-snaps/sunbeam-terraform
+    source-depth: 1
+    source-type: git
+    organize:
+      '*': etc/deploy/
+    override-build: |
+      craftctl default
+      cd $SNAPCRAFT_PART_INSTALL
+      $SNAPCRAFT_STAGE/bin/terraform init
+      $SNAPCRAFT_STAGE/bin/terraform providers mirror $SNAPCRAFT_STAGE/terraform-providers
+      rm -rf $SNAPCRAFT_PART_INSTALL/.terraform
 
 plugs:
   # Needed for juju client to autodiscover microk8s cloud

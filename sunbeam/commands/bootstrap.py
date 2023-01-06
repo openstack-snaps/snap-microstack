@@ -15,7 +15,8 @@
 
 import asyncio
 import logging
-from pathlib import Path
+import shutil
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -24,17 +25,66 @@ from snaphelpers import Snap
 from sunbeam import utils
 from sunbeam.commands import juju, ohv
 from sunbeam.commands.init import Role
+from sunbeam.commands.terraform import (
+    TerraformException,
+    TerraformHelper,
+    TerraformInitStep,
+)
 from sunbeam.jobs.checks import (
     JujuSnapCheck,
     Microk8sSnapCheck,
     OpenStackHypervisorSnapCheck,
     OpenStackHypervisorSnapHealth,
 )
-from sunbeam.jobs.common import ResultType
+from sunbeam.jobs.common import BaseStep, Result, ResultType, Status
 
 LOG = logging.getLogger(__name__)
 console = Console()
 snap = Snap()
+
+
+class DeployControlPlaneStep(BaseStep):
+    """Deploy control plane using Terraform"""
+
+    def __init__(
+        self,
+        jhelper: juju.JujuHelper,
+        tfhelper: TerraformHelper,
+        model: str,
+        cloud: str,
+    ):
+        super().__init__(
+            "Deploying OpenStack Control Plane",
+            "Deploying OpenStack Control Plane to Kubernetes",
+        )
+        self.path = snap.paths.user_common / "etc" / "deploy"
+        self.model = model
+        self.cloud = cloud
+        self.jhelper = jhelper
+        self.tfhelper = tfhelper
+
+    def run(self, status: Optional[Status] = None) -> Result:
+        """Execute configuration using terraform."""
+        # TODO(jamespage):
+        # This needs to evolve to add support for things like:
+        # - Enabling HA
+        # - Enabling/disabling specific services
+        # - Switch channels for the charmed operators
+        self.tfhelper.write_tfvars(
+            {
+                "model": self.model,
+                "cloud": self.cloud,
+            }
+        )
+        try:
+            self.tfhelper.apply()
+            asyncio.get_event_loop().run_until_complete(
+                self.jhelper.wait_until_active(self.model)
+            )
+            return Result(ResultType.COMPLETED)
+        except TerraformException as e:
+            LOG.exception("Error configuring cloud")
+            return Result(ResultType.FAILED, str(e))
 
 
 @click.command()
@@ -54,6 +104,12 @@ def bootstrap() -> None:
             "privileges. Try again without sudo."
         )
 
+    # NOTE: install to user writable location
+    src = snap.paths.snap / "etc" / "deploy"
+    dst = snap.paths.user_common / "etc" / "deploy"
+    LOG.debug(f"Updating {dst} from {src}...")
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+
     role = snap.config.get("node.role")
     node_role = Role[role.upper()]
 
@@ -61,7 +117,6 @@ def bootstrap() -> None:
 
     cloud = snap.config.get("control-plane.cloud")
     model = snap.config.get("control-plane.model")
-    bundle: Path = snap.paths.common / "etc" / "bundles" / "control-plane.yaml"
 
     preflight_checks = []
     if node_role.is_control_node():
@@ -84,14 +139,17 @@ def bootstrap() -> None:
                 raise click.ClickException(check.message)
 
     jhelper = juju.JujuHelper()
+    tfhelper = TerraformHelper(
+        path=snap.paths.user_common / "etc" / "deploy", parallelism=1
+    )
     plan = []
 
     if node_role.is_control_node():
         plan.append(juju.BootstrapJujuStep(cloud=cloud))
-        plan.append(juju.CreateModelStep(jhelper=jhelper, model=model))
+        plan.append(TerraformInitStep(tfhelper=tfhelper))
         plan.append(
-            juju.DeployBundleStep(
-                jhelper=jhelper, model=model, name="control plane", bundle=bundle
+            DeployControlPlaneStep(
+                jhelper=jhelper, tfhelper=tfhelper, model=model, cloud=cloud
             )
         )
 

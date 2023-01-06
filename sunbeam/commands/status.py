@@ -14,9 +14,7 @@
 # limitations under the License.
 
 import asyncio
-import json
 import logging
-from pathlib import Path
 
 import click
 from rich.console import Console
@@ -45,19 +43,12 @@ def status(wait_ready: bool, timeout: int) -> None:
     # context = click.get_current_context(silent=True)
 
     model = snap.config.get("control-plane.model")
-    states_path: Path = snap.paths.common / "etc" / "bundles" / "states.json"
-    with open(states_path) as states_data:
-        states = json.load(states_data)
     jhelper = juju.JujuHelper()
 
     plan = []
 
     if wait_ready:
-        plan.append(
-            juju.ModelStatusStep(
-                jhelper=jhelper, model=model, states=states, timeout=timeout
-            )
-        )
+        plan.append(juju.ModelStatusStep(jhelper=jhelper, model=model, timeout=timeout))
     else:
         # from sunbeam.commands import ohv
         # plan.append(ohv.UpdateRabbitMQConfigStep(jhelper=jhelper, model=model))

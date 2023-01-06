@@ -16,8 +16,8 @@
 import logging
 
 import requests
-from snaphelpers import Snap
 import urllib3
+from snaphelpers import Snap
 
 from sunbeam.ohv_config.client import Client as ohvClient
 
