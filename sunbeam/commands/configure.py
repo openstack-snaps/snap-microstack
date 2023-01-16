@@ -80,10 +80,6 @@ def ext_net_questions():
         "end": question_helper.PromptQuestion(
             "End of IP allocation range for external network", default_value=None
         ),
-        "physical_network": question_helper.PromptQuestion(
-            "Neutron label for physical network to map to external network",
-            default_value="physnet1",
-        ),
         "network_type": question_helper.PromptQuestion(
             "Network type for access to external network",
             choices=["flat", "vlan"],
@@ -99,28 +95,16 @@ def ext_net_questions_local_only():
     return {
         "cidr": question_helper.PromptQuestion(
             (
-                "CIDR of network to use for external networking. (This network "
-                "is exclusively for microstacks use and not exist anywhere else on "
-                "the local network)"
+                "CIDR of OpenStack external network - arbitrary but must not "
+                "be in use"
             ),
             default_value="10.20.20.0/24",
-        ),
-        "gateway": question_helper.PromptQuestion(
-            (
-                "IP address microstack will assign for traffic to/from external"
-                "network. (This address should be currently unassigned.)"
-            ),
-            default_value=None,
         ),
         "start": question_helper.PromptQuestion(
             "Start of IP allocation range for external network", default_value=None
         ),
         "end": question_helper.PromptQuestion(
             "End of IP allocation range for external network", default_value=None
-        ),
-        "physical_network": question_helper.PromptQuestion(
-            "Neutron label for physical network to map to external network",
-            default_value="physnet1",
         ),
         "network_type": question_helper.PromptQuestion(
             "Network type for access to external network",
@@ -325,9 +309,12 @@ class ConfigureCloudStep(BaseStep):
         default_gateway = self.variables["external_network"].get("gateway") or str(
             external_network_hosts[0]
         )
-        self.variables["external_network"]["gateway"] = ext_net_bank.gateway.ask(
-            new_default=default_gateway
-        )
+        if self.variables["user"]["remote_access_location"] == utils.LOCAL_ACCESS:
+            self.variables["external_network"]["gateway"] = default_gateway
+        else:
+            self.variables["external_network"]["gateway"] = ext_net_bank.gateway.ask(
+                new_default=default_gateway
+            )
         default_allocation_range_start = self.variables["external_network"].get(
             "start"
         ) or str(external_network_hosts[1])
@@ -342,7 +329,7 @@ class ConfigureCloudStep(BaseStep):
         )
         self.variables["external_network"][
             "physical_network"
-        ] = ext_net_bank.physical_network.ask()
+        ] = VARIABLE_DEFAULTS["external_network"]["physical_network"]
 
         self.variables["external_network"][
             "network_type"
