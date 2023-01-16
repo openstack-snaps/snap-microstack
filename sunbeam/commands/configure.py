@@ -327,9 +327,9 @@ class ConfigureCloudStep(BaseStep):
         self.variables["external_network"]["end"] = ext_net_bank.end.ask(
             new_default=default_allocation_range_end
         )
-        self.variables["external_network"][
-            "physical_network"
-        ] = VARIABLE_DEFAULTS["external_network"]["physical_network"]
+        self.variables["external_network"]["physical_network"] = VARIABLE_DEFAULTS[
+            "external_network"
+        ]["physical_network"]
 
         self.variables["external_network"][
             "network_type"
