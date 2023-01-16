@@ -27,6 +27,7 @@ from rich.console import Console
 from snaphelpers import Snap
 
 import sunbeam.commands.question_helper as question_helper
+from sunbeam import utils
 from sunbeam.commands.juju import JujuHelper
 from sunbeam.commands.ohv import UpdateExternalNetworkConfigStep
 from sunbeam.commands.terraform import (
@@ -35,7 +36,6 @@ from sunbeam.commands.terraform import (
     TerraformInitStep,
 )
 from sunbeam.jobs.common import BaseStep, Result, ResultType, Status
-from sunbeam import utils
 
 LOG = logging.getLogger(__name__)
 console = Console()

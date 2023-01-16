@@ -370,13 +370,9 @@ class UpdateExternalNetworkConfigStep(OHVBaseStep):
 
         answers = question_helper.load_answers()
         try:
-            remote_access_location = answers["user"][
-                "remote_access_location"
-            ]
+            remote_access_location = answers["user"]["remote_access_location"]
         except KeyError:
-            LOG.warning(
-                "Failed to find external_network.remote_access_location answer"
-            )
+            LOG.warning("Failed to find external_network.remote_access_location answer")
             remote_access_location = (
                 str(self.config.external_bridge_address) != self.IPVANYNETWORK_UNSET
             )
