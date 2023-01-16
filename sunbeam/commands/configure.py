@@ -20,17 +20,21 @@ import logging
 import os
 import shutil
 import subprocess
-from datetime import datetime
 from typing import Optional
 
 import click
 from rich.console import Console
 from snaphelpers import Snap
 
+import sunbeam.commands.question_helper as question_helper
 from sunbeam.commands.juju import JujuHelper
 from sunbeam.commands.ohv import UpdateExternalNetworkConfigStep
+from sunbeam.commands.terraform import (
+    TerraformException,
+    TerraformHelper,
+    TerraformInitStep,
+)
 from sunbeam.jobs.common import BaseStep, Result, ResultType, Status
-import sunbeam.commands.question_helper as question_helper
 
 LOG = logging.getLogger(__name__)
 console = Console()
@@ -195,58 +199,21 @@ export OS_IDENTITY_API_VERSION={self.auth_version}"""
             console.print(_openrc)
 
 
-class InitializeTerraformStep(BaseStep):
-    """Initialize Terraform with providers for OpenStack."""
-
-    def __init__(self):
-        super().__init__(
-            "Initialize Terraform", "Initializing Terraform from provider mirror"
-        )
-
-    def is_skip(self, status: Optional["Status"] = None):
-        """Determines if the step should be skipped or not.
-
-        :return: True if the Step should be skipped, False otherwise
-        """
-        return False
-
-    def run(self, status: Optional[Status]) -> Result:
-        """Initialise Terraform configuration from provider mirror,"""
-        try:
-            # NOTE:
-            # terraform init will install plugins from $SNAP/terraform-plugins
-            # which is linked to from /usr/local/share/terraform/plugins
-            terraform = str(snap.paths.snap / "bin" / "terraform")
-            cmd = [terraform, "init"]
-            LOG.debug(f'Running command {" ".join(cmd)}')
-            process = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                cwd=snap.paths.user_common / "etc" / "configure",
-            )
-            LOG.debug(
-                f"Command finished. stdout={process.stdout}, stderr={process.stderr}"
-            )
-            return Result(ResultType.COMPLETED)
-        except subprocess.CalledProcessError as e:
-            LOG.exception("Error initializing Terraform")
-            return Result(ResultType.FAILED, str(e))
-
-
 class ConfigureCloudStep(BaseStep):
     """Default cloud configuration for all-in-one install."""
 
     def __init__(
-        self, credentials: dict, preseed_file: str = None, accept_defaults: bool = False
+        self,
+        tfhelper: TerraformHelper,
+        preseed_file: str = None,
+        accept_defaults: bool = False,
     ):
         super().__init__(
             "Configure OpenStack cloud", "Configuring OpenStack cloud for use"
         )
-        self.admin_credentials = credentials
         self.accept_defaults = accept_defaults
         self.preseed_file = preseed_file
+        self.tfhelper = tfhelper
         self.variables = question_helper.load_answers()
         for section in ["user", "external_network"]:
             if not self.variables.get(section):
@@ -342,34 +309,10 @@ class ConfigureCloudStep(BaseStep):
 
     def run(self, status: Optional[Status]) -> Result:
         """Execute configuration using terraform."""
-        env = os.environ.copy()
-        env.update(self.admin_credentials)
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        tf_log = str(
-            snap.paths.user_common / "etc" / "configure" / f"terraform-{timestamp}.log"
-        )
-        env.update({"TF_LOG": "INFO", "TF_LOG_PATH": tf_log})
         try:
-            terraform = str(snap.paths.snap / "bin" / "terraform")
-            cmd = [
-                terraform,
-                "apply",
-                "-auto-approve",
-            ]
-            LOG.debug(f'Running command {" ".join(cmd)}')
-            process = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                cwd=snap.paths.user_common / "etc" / "configure",
-                env=env,
-            )
-            LOG.debug(
-                f"Command finished. stdout={process.stdout}, stderr={process.stderr}"
-            )
+            self.tfhelper.apply()
             return Result(ResultType.COMPLETED)
-        except subprocess.CalledProcessError as e:
+        except TerraformException as e:
             LOG.exception("Error configuring cloud")
             return Result(ResultType.FAILED, str(e))
 
@@ -396,14 +339,17 @@ def configure(
         LOG.error(f"Expected model {model} missing")
         raise click.ClickException("Please run `microstack bootstrap` first")
     admin_credentials = _retrieve_admin_credentials(jhelper, model)
+    tfhelper = TerraformHelper(
+        path=snap.paths.user_common / "etc" / "configure", env=admin_credentials
+    )
     ext_network_file = (
         snap.paths.user_common / "etc" / "configure" / "terraform.tfvars.json"
     )
 
     plan = [
-        InitializeTerraformStep(),
+        TerraformInitStep(tfhelper=tfhelper),
         ConfigureCloudStep(
-            credentials=admin_credentials,
+            tfhelper=tfhelper,
             preseed_file=preseed,
             accept_defaults=accept_defaults,
         ),

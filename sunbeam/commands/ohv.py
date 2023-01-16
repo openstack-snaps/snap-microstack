@@ -21,11 +21,11 @@ import operator
 from pathlib import Path
 from typing import Optional
 
+import sunbeam.commands.question_helper as question_helper
 from sunbeam import utils
 from sunbeam.commands.juju import JujuHelper
 from sunbeam.jobs.common import BaseStep, InstallSnapStep, Result, ResultType
 from sunbeam.ohv_config.client import Client as ohvClient
-import sunbeam.commands.question_helper as question_helper
 
 LOG = logging.getLogger(__name__)
 

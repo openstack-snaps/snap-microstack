@@ -147,6 +147,22 @@ class JujuHelper:
             LOG.error(f"Error in deploying bundle: {str(e)}")
             return False
 
+    async def wait_until_active(self, model: str) -> None:
+        """Wait for all units in model to reach active status"""
+        if not self.controller:
+            self.controller = Controller()
+            await self.controller.connect()
+
+        model = await self.controller.get_model(model)
+
+        await model.block_until(
+            lambda: all(
+                unit.workload_status == "active"
+                for application in model.applications.values()
+                for unit in application.units
+            )
+        )
+
     async def destroy_model(self, model_name: str, wait: bool = True) -> bool:
         """Destroy the model"""
         try:

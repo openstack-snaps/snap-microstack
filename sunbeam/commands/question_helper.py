@@ -13,16 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import json
 import logging
+import os
 from typing import Any, Callable
 
 import pwgen
 import yaml
-from snaphelpers import Snap
-from rich.prompt import Prompt, Confirm
 from rich.console import Console
+from rich.prompt import Confirm, Prompt
+from snaphelpers import Snap
 
 LOG = logging.getLogger(__name__)
 
