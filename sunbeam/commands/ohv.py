@@ -281,9 +281,9 @@ class UpdateNetworkConfigStep(OHVBaseStep):
             self.config.ovn_sb_connection = url
             skip = False
 
-        app = "vault"
-        action_cmd = "generate-certificate"
-        action_params = {"cn": cn, "sans": sans, "type": "client"}
+        app = "certificate-authority"
+        action_cmd = "generate-self-signed-certificate"
+        action_params = {"common-name": cn, "sans": sans}
         action_result = asyncio.get_event_loop().run_until_complete(
             self.jhelper.run_action(self.model, app, action_cmd, action_params)
         )
