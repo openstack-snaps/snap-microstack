@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import click
 import copy
+
+import click
 
 INSTALL_SCRIPT_TEMPLATE = """USER=$(whoami)
 sudo snap install microk8s --channel {microk8s_channel}
