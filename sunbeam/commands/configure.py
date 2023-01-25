@@ -72,7 +72,7 @@ def ext_net_questions():
             default_value="10.20.20.0/24",
         ),
         "gateway": question_helper.PromptQuestion(
-            "IP address of gateway for external network", default_value=None
+            "IP address of default gateway for external network", default_value=None
         ),
         "start": question_helper.PromptQuestion(
             "Start of IP allocation range for external network", default_value=None
