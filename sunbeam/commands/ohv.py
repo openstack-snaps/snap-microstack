@@ -364,21 +364,19 @@ class UpdateExternalNetworkConfigStep(OHVBaseStep):
 
         # Read previously collected information about external network subnet
         with open(self.ext_network_file, "r") as fp:
-            self.ext_network = json.load(fp).get("external_network", {})
+            _config = json.load(fp)
+            self.ext_network = _config.get("external_network", {})
+            self.user = _config.get("user", {})
 
         answers = question_helper.load_answers()
         try:
-            enable_host_only_networking = answers["external_network"][
-                "enable_host_only_networking"
-            ]
+            remote_access_location = answers["user"]["remote_access_location"]
         except KeyError:
-            LOG.warning(
-                "Failed to find external_network.enable_host_only_networking answer"
-            )
-            enable_host_only_networking = (
+            LOG.warning("Failed to find external_network.remote_access_location answer")
+            remote_access_location = (
                 str(self.config.external_bridge_address) != self.IPVANYNETWORK_UNSET
             )
-        if enable_host_only_networking:
+        if remote_access_location == utils.LOCAL_ACCESS:
             external_network = ipaddress.ip_network(self.ext_network.get("cidr"))
             bridge_interface = (
                 f"{self.ext_network.get('gateway')}/{external_network.prefixlen}"
