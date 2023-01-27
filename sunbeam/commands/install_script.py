@@ -16,6 +16,9 @@
 import copy
 
 import click
+from rich.console import Console
+
+console = Console()
 
 INSTALL_SCRIPT_TEMPLATE = """USER=$(whoami)
 sudo snap install microk8s --channel {microk8s_channel}
@@ -28,22 +31,20 @@ sudo microk8s disable metallb
 sudo microk8s enable metallb {metallb_range}
 sudo usermod -a -G snap_microk8s $USER
 sudo chown -f -R $USER ~/.kube
-newgrp snap_microk8s
-newgrp lxd
-id
-touch /var/snap/microk8s/current/var/lock/no-cert-reissue
+sg snap_microk8s "touch /var/snap/microk8s/current/var/lock/no-cert-reissue"
 sudo snap install juju --channel {juju_channel}
-mkdir -p .local/share
+sg snap_microk8s "mkdir -p .local/share"
 sudo snap install openstackclients
 sudo snap install openstack-hypervisor --channel {hypervisor_channel}
-microstack -v bootstrap
-microstack -v openrc > admin_openrc
-microstack -v configure -a -o demo_openrc"""
+sg snap_microk8s "microstack bootstrap"
+sg snap_microk8s "microstack openrc > admin_openrc"
+sg snap_microk8s "microstack configure -a -o demo_openrc"
+"""
 
 DEFAULT = {
     "metallb_range": "10.177.200.170-10.177.200.190",
     "microk8s_channel": "1.25-strict/stable",
-    "juju_channel": "3.0/candidate",
+    "juju_channel": "3.1/candidate",
     "hypervisor_channel": "yoga/edge",
 }
 
@@ -52,4 +53,4 @@ DEFAULT = {
 def install_script() -> None:
     """Generate install script"""
     ctxt = copy.deepcopy(DEFAULT)
-    print(INSTALL_SCRIPT_TEMPLATE.format(**ctxt))
+    console.print(INSTALL_SCRIPT_TEMPLATE.format(**ctxt))
