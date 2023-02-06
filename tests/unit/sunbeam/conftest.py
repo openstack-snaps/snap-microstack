@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -55,4 +56,28 @@ def run():
 @pytest.fixture
 def environ():
     with patch("os.environ") as p:
+        yield p
+
+
+@pytest.fixture
+def pglob():
+    nic1 = MagicMock()
+    nic1.name = "tap0783c4e4"
+    nic2 = MagicMock()
+    nic2.name = "ovs-switch"
+    with patch("pathlib.PosixPath.glob") as p:
+        p.return_value = [nic1, nic2]
+        yield p
+
+
+@pytest.fixture
+def net_if_addrs():
+    with patch("psutil.net_if_addrs") as p:
+        p.return_value = {
+            "eth0": [(socket.AF_INET6,)],
+            "eth1": [(socket.AF_INET,)],
+            "ovs-switch": [],
+            "eth2": [],
+            "eth3": [],
+        }
         yield p

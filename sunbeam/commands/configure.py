@@ -18,13 +18,15 @@ import ipaddress
 import json
 import logging
 import os
+import socket
 import shutil
 import subprocess
+from pathlib import Path
 from typing import Optional
 
 import click
+import psutil
 from rich.console import Console
-from snaphelpers import Snap
 
 import sunbeam.commands.question_helper as question_helper
 from sunbeam import utils
@@ -39,7 +41,27 @@ from sunbeam.jobs.common import BaseStep, Result, ResultType, Status
 
 LOG = logging.getLogger(__name__)
 console = Console()
-snap = Snap()
+
+
+def get_free_nic() -> str:
+    """Return a nic which does not have a v4 or v6 address."""
+    virtual_nic_dir = "/sys/devices/virtual/net/"
+    virtual_nics = [p.name for p in Path(virtual_nic_dir).glob("*")]
+    free_nics = []
+    for nic_name, nic_config in psutil.net_if_addrs().items():
+        if nic_name in virtual_nics:
+            LOG.debug(f"Skipping {nic_name} it is virtual")
+            continue
+        nic_addrs = [a for a in nic_config if a[0] in [socket.AF_INET, socket.AF_INET6]]
+        if nic_addrs:
+            LOG.debug(f"Skipping {nic_name} it is configured")
+        else:
+            free_nics.append(nic_name)
+    if free_nics:
+        free_nic = sorted(free_nics)[0]
+    else:
+        free_nic = None
+    return free_nic
 
 
 def user_questions():
@@ -87,6 +109,10 @@ def ext_net_questions():
         ),
         "segmentation_id": question_helper.PromptQuestion(
             "VLAN ID to use for external network", default_value=0
+        ),
+        "nic": question_helper.PromptQuestion(
+            "Free network interface microstack can use for external traffic",
+            default_function=get_free_nic,
         ),
     }
 
@@ -182,6 +208,7 @@ class UserOpenRCStep(BaseStep):
 
     def run(self, status: Optional[Status]) -> Result:
         try:
+            snap = utils.get_snap()
             terraform = str(snap.paths.snap / "bin" / "terraform")
             cmd = [terraform, "output", "-json"]
             LOG.debug(f'Running command {" ".join(cmd)}')
@@ -312,6 +339,7 @@ class ConfigureCloudStep(BaseStep):
         if self.variables["user"]["remote_access_location"] == utils.LOCAL_ACCESS:
             self.variables["external_network"]["gateway"] = default_gateway
         else:
+            self.variables["external_network"]["nic"] = ext_net_bank.nic.ask()
             self.variables["external_network"]["gateway"] = ext_net_bank.gateway.ask(
                 new_default=default_gateway
             )
@@ -362,6 +390,7 @@ def configure(
     openrc: str = None, preseed: str = None, accept_defaults: bool = False
 ) -> None:
     """Configure cloud with some sane defaults."""
+    snap = utils.get_snap()
     # NOTE: install to user writable location
     src = snap.paths.snap / "etc" / "configure"
     dst = snap.paths.user_common / "etc" / "configure"

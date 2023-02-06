@@ -21,11 +21,20 @@ import typing
 
 from netifaces import AF_INET, ifaddresses, interfaces
 from semver import VersionInfo
+from snaphelpers import Snap
 
 UNKNOWN_VERSION = VersionInfo(0, 0, 0)
 
 LOCAL_ACCESS = "local"
 REMOTE_ACCESS = "remote"
+
+
+def get_snap():
+    """Returns the current snap environment.
+
+    :return:
+    """
+    return Snap()
 
 
 def has_superuser_privileges() -> bool:
