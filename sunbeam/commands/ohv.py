@@ -384,7 +384,7 @@ class UpdateExternalNetworkConfigStep(OHVBaseStep):
             self.config.external_bridge_address = bridge_interface
         else:
             self.config.external_bridge_address = self.IPVANYNETWORK_UNSET
-            self.config.gateway_nic = self.ext_network.get("nic")
+            self.config.external_nic = self.ext_network.get("nic")
 
         self.config.physnet_name = self.ext_network.get("physical_network")
 

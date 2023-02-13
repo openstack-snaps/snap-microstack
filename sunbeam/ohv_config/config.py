@@ -86,7 +86,7 @@ class NetworkConfig(BaseModel):
     ovn_cacert: Optional[str] = Field(alias="ovn-cacert")
     enable_gateway: bool = Field(alias="enable-gateway", default=False)
     ip_address: Optional[IPvAnyAddress] = Field(alias="ip-address")
-    gateway_nic: Optional[str] = Field(alias="gateway-nic")
+    external_nic: Optional[str] = Field(alias="external-nic")
 
 
 class NodeConfig(BaseModel):

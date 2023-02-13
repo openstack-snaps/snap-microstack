@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import socket
+import os
 from unittest.mock import MagicMock, patch
 
+import netifaces
 import pytest
 from snaphelpers import Snap, SnapConfig, SnapServices
 
@@ -59,25 +60,60 @@ def environ():
         yield p
 
 
+nic_config = {
+    "eth0": {
+        netifaces.AF_LINK: [{"addr": "eth0mac1"}, {"addr": "eth0mac2"}],
+        netifaces.AF_INET: [{"addr": "10.0.0.1"}],
+        netifaces.AF_INET6: [{"addr": "fe80::52eb:f6ff:fe5c:2300%eth0"}],
+    },
+    "eth1": {
+        netifaces.AF_LINK: [{"addr": "eth1mac1"}, {"addr": "eth1mac2"}],
+        netifaces.AF_INET: [{"addr": "10.0.0.2"}],
+    },
+    "eth2": {netifaces.AF_LINK: [{"addr": "bond0mac1"}, {"addr": "eth2mac2"}]},
+    "eth3": {netifaces.AF_LINK: [{"addr": "bond0mac1"}, {"addr": "eth3mac2"}]},
+    "eth4": {netifaces.AF_LINK: [{"addr": "eth40mac1"}, {"addr": "eth4mac2"}]},
+    "eth5": {netifaces.AF_LINK: [{"addr": "bond1mac1"}, {"addr": "eth5mac2"}]},
+    "eth6": {netifaces.AF_LINK: [{"addr": "bond1mac1"}, {"addr": "eth6mac2"}]},
+    "ovs-system": {netifaces.AF_LINK: [{"addr": "ovssysmac1"}]},
+}
+bond_config = {
+    "bond0": {netifaces.AF_LINK: [{"addr": "bond0mac1"}, {"addr": "bond0mac2"}]},
+    "bond1": {
+        netifaces.AF_LINK: [{"addr": "bond1mac1"}, {"addr": "bond1mac2"}],
+        netifaces.AF_INET: [{"addr": "10.0.0.19"}],
+    },
+}
+
+
 @pytest.fixture
-def pglob():
-    nic1 = MagicMock()
-    nic1.name = "tap0783c4e4"
-    nic2 = MagicMock()
-    nic2.name = "ovs-switch"
-    with patch("pathlib.PosixPath.glob") as p:
-        p.return_value = [nic1, nic2]
+def ifaddresses():
+    with patch("netifaces.ifaddresses") as p:
+
+        def _ifaddresses(nic):
+            return nic_config.get(nic) or bond_config.get(nic)
+
+        p.side_effect = _ifaddresses
         yield p
 
 
 @pytest.fixture
-def net_if_addrs():
-    with patch("psutil.net_if_addrs") as p:
-        p.return_value = {
-            "eth0": [(socket.AF_INET6,)],
-            "eth1": [(socket.AF_INET,)],
-            "ovs-switch": [],
-            "eth2": [],
-            "eth3": [],
-        }
+def interfaces():
+    with patch("netifaces.interfaces") as p:
+        p.return_value = list(nic_config.keys()) + list(bond_config.keys())
+        yield p
+
+
+@pytest.fixture
+def pglob():
+    def _glob(path):
+        if path.startswith("/sys/devices/virtual/net"):
+            nics = ["ovs-system", "bond0", "bond1"]
+        else:
+            nics = ["bond0", "bond1"]
+        nics = [os.path.dirname(path) + f"/{n}" for n in nics]
+        return nics
+
+    with patch("glob.glob") as p:
+        p.side_effect = _glob
         yield p
