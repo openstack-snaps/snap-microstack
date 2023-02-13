@@ -93,7 +93,7 @@ def bootstrap() -> None:
 
     Bootstrap juju.
     Deploy control plane if the node role is CONTROL.
-    Depoy openstack-hypervisor snap if the node role
+    Deploy openstack-hypervisor snap if the node role
     is COMPUTE.
     """
     # context = click.get_current_context(silent=True)
