@@ -87,9 +87,9 @@ def get_free_nics() -> list:
 
 def get_free_nic() -> str:
     nics = get_free_nics()
-    nic = ''
+    nic = ""
     if len(nics) > 0:
-       nic = nics[0]
+        nic = nics[0]
     return nic
 
 
