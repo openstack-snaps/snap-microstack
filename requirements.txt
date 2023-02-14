@@ -2,8 +2,9 @@ pbr>2.1.0 # Apache 2.0
 git+https://github.com/albertodonato/snap-helpers#egg=snap-helpers # LGPLv3
 click>=8.1.3 # BSD
 rich # MIT
-#juju # Apache 2
-git+https://github.com/juju/python-libjuju#egg=juju
+
+# Set upper bound to match Juju 3.1.x series target
+juju<3.2 # Apache 2
 
 # Used for communication with snapd socket
 requests # Apache 2
