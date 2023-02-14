@@ -68,7 +68,12 @@ def bootstrap() -> None:
         preflight_checks.extend([JujuSnapCheck(), Microk8sSnapCheck()])
     if node_role.is_compute_node():
         preflight_checks.extend(
-            [OpenStackHypervisorSnapCheck(), OpenStackHypervisorSnapHealth()]
+            [
+                OpenStackHypervisorSnapCheck(),
+                # Just check config service is responding as hypervisor will report
+                # that it is not ready until it has recieved required config.
+                OpenStackHypervisorSnapHealth(check_health_report=False),
+            ]
         )
 
     for check in preflight_checks:

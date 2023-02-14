@@ -118,11 +118,12 @@ class OpenStackHypervisorSnapCheck(Check):
 class OpenStackHypervisorSnapHealth(Check):
     """Check if openStack-hypervisor snap is healthy."""
 
-    def __init__(self):
+    def __init__(self, check_health_report=True):
         super().__init__(
             "Check health of openstack-hypervisor snap",
             "Checking health of openstack-hypervisor",
         )
+        self.check_health_report = check_health_report
 
     def run(self) -> bool:
         """Check for openstack-hypervisor content."""
@@ -136,7 +137,7 @@ class OpenStackHypervisorSnapHealth(Check):
         ):
             self.message = "Failed to communitcate with openstack-hypervisor"
             return False
-        if not hypervisor_health.get("ready"):
+        if self.check_health_report and not hypervisor_health.get("ready"):
             self.message = "openstack-hypervisor reporting not ready"
             return False
 

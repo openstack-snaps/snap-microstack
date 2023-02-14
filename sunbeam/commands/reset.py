@@ -69,6 +69,10 @@ def reset() -> None:
 
     plan = []
 
+    if node_role.is_compute_node() or node_role.is_converged_node():
+        LOG.debug("Append steps to reset the compute node")
+        plan.append(ohv.ResetConfigStep())
+
     if node_role.is_control_node() or node_role.is_converged_node():
         LOG.debug("Append steps to reset the control node")
         # FIXME: This needs to be done only in non HA
@@ -76,10 +80,6 @@ def reset() -> None:
         # exists and getting used for other purposes
         plan.append(juju.DestroyModelStep(jhelper=jhelper, model=model))
         plan.append(PurgeTerraformStateStep())
-
-    if node_role.is_compute_node() or node_role.is_converged_node():
-        LOG.debug("Append steps to reset the compute node")
-        plan.append(ohv.ResetConfigStep())
 
     for step in plan:
         LOG.debug(f"Starting step {step.name}")
