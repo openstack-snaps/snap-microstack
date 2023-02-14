@@ -19,7 +19,6 @@ import os
 
 import click
 from rich.console import Console
-from snaphelpers import Snap
 
 from sunbeam import utils
 from sunbeam.commands import juju, microk8s, ohv  # noqa: H301
@@ -27,14 +26,6 @@ from sunbeam.jobs.common import ResultType
 
 LOG = logging.getLogger(__name__)
 console = Console()
-
-
-def get_snap():
-    """Returns the current snap environment.
-
-    :return:
-    """
-    return Snap()
 
 
 class Role(enum.Enum):
@@ -119,7 +110,7 @@ def init(auto: bool, role: str) -> None:
             "privileges. Try again with sudo."
         )
 
-    snap = get_snap()
+    snap = utils.get_snap()
     snap.config.set({"node.role": role.upper()})
     node_role = Role[role.upper()]
     microk8s_channel = snap.config.get("snap.channel.microk8s")
