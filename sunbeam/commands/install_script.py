@@ -44,8 +44,8 @@ sg snap_microk8s "microstack configure -a -o demo_openrc"
 DEFAULT = {
     "metallb_range": "10.177.200.170-10.177.200.190",
     "microk8s_channel": "1.25-strict/stable",
-    "juju_channel": "3.1/candidate",
-    "hypervisor_channel": "yoga/edge",
+    "juju_channel": "3.1/stable",
+    "hypervisor_channel": "yoga/beta",
 }
 
 
