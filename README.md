@@ -71,7 +71,7 @@ sudo snap connect microstack:juju-bin juju:juju-bin
 Install OpenStack hypervisor snap
 
 ```bash
-sudo snap install --channel xena/edge openstack-hypervisor
+sudo snap install --channel yoga/edge openstack-hypervisor
 ```
 
 Bootstrap the cloud and configure the OpenStack services. Note that this
@@ -185,7 +185,7 @@ Please report bugs to the [MicroStack][microstack] project on Launchpad.
 [microstack-docs-badge]: https://img.shields.io/badge/MicroStack-Docs-E95420?logo=ubuntu&logoColor=white
 [oftc-badge]: https://img.shields.io/badge/chat-%23openstack--snaps%20on%20oftc-brightgreen.svg
 [oftc-webaccess]: https://webchat.oftc.net/?channels=%23openstack-snaps
-[openstack-badge]: https://img.shields.io/badge/Openstack-xena-%23f01742.svg?logo=openstack&logoColor=white
+[openstack-badge]: https://img.shields.io/badge/Openstack-yoga-%23f01742.svg?logo=openstack&logoColor=white
 [gated-badge]: https://zuul-ci.org/gated.svg
 [zuul-jobs]: https://zuul.opendev.org/t/openstack/builds?project=x%2Fmicrostack#
 [snap-store-badge]: https://snapcraft.io/static/images/badges/en/snap-store-black.svg
