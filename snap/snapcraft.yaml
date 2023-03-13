@@ -84,6 +84,7 @@ parts:
     source: https://github.com/openstack-snaps/sunbeam-terraform
     source-depth: 1
     source-type: git
+    source-branch: stable/yoga
     organize:
       '*': etc/deploy/
     override-build: |
