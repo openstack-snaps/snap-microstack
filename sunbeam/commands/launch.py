@@ -92,35 +92,9 @@ def launch(
     server_id = ""
     keypath = ""
     console.print("Launching an OpenStack instance ... ")
-    with console.status("Getting Keystone admin information ... "):
-        app = "keystone"
-        action_cmd = "get-admin-account"
-        action_result = asyncio.get_event_loop().run_until_complete(
-            jhelper.run_action(model, app, action_cmd)
-        )
-
-        if action_result.get("return-code", 0) > 1:
-            _message = "Unable to retrieve OpenStack credentials from Keystone service"
-            raise click.ClickException(_message)
-        else:
-            LOG.debug("Successfully retrieved admin info from Keystone")
-            
-        os_username = action_result.get("username")
-        os_password = action_result.get("password")
-        os_auth_url = action_result.get("public-endpoint")
-        os_user_domain_name = action_result.get("user-domain-name")
-        os_project_domain_name = action_result.get("project-domain-name")
-        os_project_name = action_result.get("project-name")
-        os_auth_version = action_result.get("api-version")
-        os_identity_api_version = action_result.get("api_version")
-
+    
     conn = openstack.connect(
-        os_auth_url=os_auth_url,
-        project_name=os_project_name,
-        username=os_username,
-        password=os_password,
-        user_domain_name=os_user_domain_name,
-        project_domain_name=os_project_domain_name,
+        cloud="sunbeam"
     )
 
     with console.status("Checking for SSH key pair ... "):
