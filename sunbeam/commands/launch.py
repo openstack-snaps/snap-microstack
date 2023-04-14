@@ -137,4 +137,4 @@ key_name = %s
         ip = conn.network.create_ip(floating_network_id=external_network.id)
         conn.compute.add_floating_ip_to_server(server_id, ip.floating_ip_address)
 
-    console.print("Access the instance with `ssh -i {key_path} ubuntu@{ip.floating_ip_address}")
+    console.print(f"Access the instance with `ssh -i {key_path} ubuntu@{ip.floating_ip_address}")
