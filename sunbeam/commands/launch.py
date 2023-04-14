@@ -57,24 +57,18 @@ def check_keypair(openstack_conn: openstack.connection.Connection):
     Check for the sunbeam keypair's existence, creating it if it doesn't.
 
     """
-    key_path = f"~/.ssh/sunbeam"
-    LOG.debug(f"check_keypair Key Path is: {key_path}")
-    if os.path.exists(key_path):
-        return key_path
-    console.print('Creating local "sunbeam" ssh key at {}'.format(key_path))
-    # TODO: make sure that we get rid of this path on snap
-    # uninstall. If we don't, check to make sure that Sunbeam
-    # has a sunbeam ssh key, in addition to checking for the
-    # existence of the file.
-    key_dir = os.sep.join(key_path.split(os.sep)[:-1])
-    check('mkdir', '-p', key_dir)
-    check('chmod', '700', key_dir)
-
-    id_ = openstack_conn.compute.create_keypair(name="sunbeam")
-    with open(key_path, 'w') as file_:
-        file_.write(id_.private_key)
-        check('chmod', '600', key_path)
-
+    console.print("Checking for sunbeam key in OpenStack ... ")
+    home = os.environ.get("SNAP_REAL_HOME")
+    key_path = f"{home}/sunbeam"
+    try:
+        keypair = openstack_conn.compute.get_keypair("sunbeam")
+        console.print("Found sunbeam key!")
+    except openstack.exceptions.ResourceNotFound:
+        console.print(f"No sunbeam key found. Creating sunbeam SSH key at {key_path}/sunbeam")
+        id_ = openstack_conn.compute.create_keypair(name="sunbeam")
+        with open(key_path, 'w') as file_:
+            file_.write(id_.private_key)
+            check('chmod', '600', key_path)
     return key_path
 
 @click.command()
