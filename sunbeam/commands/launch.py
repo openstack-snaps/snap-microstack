@@ -71,7 +71,6 @@ def check_keypair(openstack_conn: openstack.connection.Connection):
     check('chmod', '700', key_dir)
 
     id_ = openstack_conn.compute.create_keypair(name="sunbeam")
-
     with open(key_path, 'w') as file_:
         file_.write(id_.private_key)
         check('chmod', '600', key_path)
@@ -92,10 +91,13 @@ def launch(
     server_id = ""
     keypath = ""
     console.print("Launching an OpenStack instance ... ")
-    
-    conn = openstack.connect(
-        cloud="sunbeam"
-    )
+    try:
+        conn = openstack.connect(
+            cloud="sunbeam"
+        )
+    except:
+        console.print(f"Unable to connect to OpenStack. Is OpenStack running? Have you run the configure command? Do you have a clouds.yaml file?")
+        return
 
     with console.status("Checking for SSH key pair ... "):
         if key == "sunbeam":
