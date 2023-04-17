@@ -79,11 +79,6 @@ def launch(
     """
     Launch an OpenStack instance
     """
-    LOG.debug(f"The supplied key name is {key}.")
-    model = snap.config.get("control-plane.model")
-    jhelper = juju.JujuHelper()
-    server_id = ""
-    keypath = ""
     console.print("Launching an OpenStack instance ... ")
     try:
         conn = openstack.connect(
