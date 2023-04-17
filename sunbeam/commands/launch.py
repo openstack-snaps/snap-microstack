@@ -17,11 +17,12 @@ import logging
 import os
 import subprocess
 
+from typing import List
+
 import click
 import openstack
 import petname
 
-from typing import List
 
 from rich.console import Console
 from snaphelpers import Snap
@@ -60,14 +61,14 @@ def check_keypair(openstack_conn: openstack.connection.Connection):
     home = os.environ.get("SNAP_REAL_HOME")
     key_path = f"{home}/sunbeam"
     try:
-        keypair = openstack_conn.compute.get_keypair("sunbeam")
+        openstack_conn.compute.get_keypair("sunbeam")
         console.print("Found sunbeam key!")
     except openstack.exceptions.ResourceNotFound:
         console.print(
             f"No sunbeam key found. Creating SSH key at {key_path}/sunbeam"
         )
         id_ = openstack_conn.compute.create_keypair(name="sunbeam")
-        with open(key_path, 'w') as file_:
+        with open(key_path, 'w', encoding="utf-8") as file_:
             file_.write(id_.private_key)
             check('chmod', '600', key_path)
     return key_path
@@ -93,12 +94,10 @@ def launch(
         )
     except Exception:
         console.print(
-            (
-                f"Unable to connect to OpenStack.",
-                f" Is OpenStack running?",
-                f" Have you run the configure command?",
-                f" Do you have a clouds.yaml file?"
-            )
+                "Unable to connect to OpenStack.",
+                " Is OpenStack running?",
+                " Have you run the configure command?",
+                " Do you have a clouds.yaml file?"
         )
         return
 
@@ -134,15 +133,15 @@ def launch(
 
     with console.status("Allocating IP address to instance ... "):
         external_network = conn.network.find_network("external-network")
-        ip = conn.network.create_ip(floating_network_id=external_network.id)
+        ip_ = conn.network.create_ip(floating_network_id=external_network.id)
         conn.compute.add_floating_ip_to_server(
             server_id,
-            ip.floating_ip_address
+            ip_.floating_ip_address
         )
 
     console.print(
         (
-            f"Access instance with",
-            f"`ssh -i {key_path} ubuntu@{ip.floating_ip_address}"
+            "Access instance with",
+            f"`ssh -i {key_path} ubuntu@{ip_.floating_ip_address}"
         )
     )
