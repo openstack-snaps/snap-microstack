@@ -92,7 +92,7 @@ def launch(
         conn = openstack.connect(
             cloud="sunbeam"
         )
-    except Exception:
+    except openstack.exceptions.SDKException:
         console.print(
                 "Unable to connect to OpenStack.",
                 " Is OpenStack running?",
