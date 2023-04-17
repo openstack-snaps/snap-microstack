@@ -44,6 +44,7 @@ def check_output(*args: List[str]) -> str:
     return subprocess.check_output(args, universal_newlines=True,
                                    env=os.environ).strip()
 
+
 def check(*args: List[str]) -> int:
     """Execute a shell command, raising an error on failed excution.
 
@@ -51,6 +52,7 @@ def check(*args: List[str]) -> int:
 
     """
     return subprocess.check_call(args, env=os.environ)
+
 
 def check_keypair(openstack_conn: openstack.connection.Connection):
     """
@@ -64,15 +66,23 @@ def check_keypair(openstack_conn: openstack.connection.Connection):
         keypair = openstack_conn.compute.get_keypair("sunbeam")
         console.print("Found sunbeam key!")
     except openstack.exceptions.ResourceNotFound:
-        console.print(f"No sunbeam key found. Creating sunbeam SSH key at {key_path}/sunbeam")
+        console.print(
+            f"No sunbeam key found. Creating SSH key at {key_path}/sunbeam"
+        )
         id_ = openstack_conn.compute.create_keypair(name="sunbeam")
         with open(key_path, 'w') as file_:
             file_.write(id_.private_key)
             check('chmod', '600', key_path)
     return key_path
 
+
 @click.command()
-@click.option("-k", "--key", default="sunbeam", help="The SSH key to use for the instance")
+@click.option(
+    "-k",
+    "--key",
+    default="sunbeam",
+    help="The SSH key to use for the instance"
+)
 def launch(
     key: str = "sunbeam"
 ) -> None:
@@ -84,8 +94,15 @@ def launch(
         conn = openstack.connect(
             cloud="sunbeam"
         )
-    except:
-        console.print(f"Unable to connect to OpenStack. Is OpenStack running? Have you run the configure command? Do you have a clouds.yaml file?")
+    except Exception:
+        console.print(
+            (
+                f"Unable to connect to OpenStack.",
+                f" Is OpenStack running?",
+                f" Have you run the configure command?",
+                f" Do you have a clouds.yaml file?"
+            )
+        )
         return
 
     with console.status("Checking for SSH key pair ... "):
@@ -107,16 +124,6 @@ def launch(
         flavor = conn.compute.find_flavor("m1.tiny")
         network = conn.network.find_network("demo-network")
         keypair = conn.compute.find_keypair(key)
-        LOG.debug(
-            """
-Creating an instance with this configuration:
-name     = %s,
-image    = %s,
-flavor   = %s,
-network  = %s,
-key_name = %s
-            """ % (instance_name, image.id, flavor.id, network.id, keypair.name)
-            )
         server = conn.compute.create_server(
             name=instance_name,
             image_id=image.id,
@@ -131,6 +138,14 @@ key_name = %s
     with console.status("Allocating IP address to instance ... "):
         external_network = conn.network.find_network("external-network")
         ip = conn.network.create_ip(floating_network_id=external_network.id)
-        conn.compute.add_floating_ip_to_server(server_id, ip.floating_ip_address)
+        conn.compute.add_floating_ip_to_server(
+            server_id,
+            ip.floating_ip_address
+        )
 
-    console.print(f"Access the instance with `ssh -i {key_path} ubuntu@{ip.floating_ip_address}")
+    console.print(
+        (
+            f"Access instance with",
+            f"`ssh -i {key_path} ubuntu@{ip.floating_ip_address}"
+        )
+    )
