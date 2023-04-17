@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import asyncio
 import logging
 import os
 import subprocess
@@ -26,8 +25,6 @@ from typing import List
 
 from rich.console import Console
 from snaphelpers import Snap
-
-from sunbeam.commands import juju
 
 LOG = logging.getLogger(__name__)
 console = Console()
