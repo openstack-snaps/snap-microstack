@@ -98,7 +98,8 @@ def launch(
             # some placeholder text for the message at the end of this
             # routine, but don't worry about verifying it. We trust the
             # caller to have created it!
-            key_path = '/path/to/ssh/key'
+            home = os.environ.get("SNAP_REAL_HOME")
+            key_path = f"{home}/.ssh/{key}"
 
     with console.status("Creating the OpenStack instance ... "):
         instance_name = petname.Generate()
