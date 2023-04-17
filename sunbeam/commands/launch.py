@@ -39,8 +39,9 @@ def check_output(*args: List[str]) -> str:
 
     Include our env; pass in any extra keyword args.
     """
-    return subprocess.check_output(args, universal_newlines=True,
-                                   env=os.environ).strip()
+    return subprocess.check_output(
+        args, universal_newlines=True, env=os.environ
+    ).strip()
 
 
 def check(*args: List[str]) -> int:
@@ -64,40 +65,31 @@ def check_keypair(openstack_conn: openstack.connection.Connection):
         openstack_conn.compute.get_keypair("sunbeam")
         console.print("Found sunbeam key!")
     except openstack.exceptions.ResourceNotFound:
-        console.print(
-            f"No sunbeam key found. Creating SSH key at {key_path}/sunbeam"
-        )
+        console.print(f"No sunbeam key found. Creating SSH key at {key_path}/sunbeam")
         id_ = openstack_conn.compute.create_keypair(name="sunbeam")
-        with open(key_path, 'w', encoding="utf-8") as file_:
+        with open(key_path, "w", encoding="utf-8") as file_:
             file_.write(id_.private_key)
-            check('chmod', '600', key_path)
+            check("chmod", "600", key_path)
     return key_path
 
 
 @click.command()
 @click.option(
-    "-k",
-    "--key",
-    default="sunbeam",
-    help="The SSH key to use for the instance"
+    "-k", "--key", default="sunbeam", help="The SSH key to use for the instance"
 )
-def launch(
-    key: str = "sunbeam"
-) -> None:
+def launch(key: str = "sunbeam") -> None:
     """
     Launch an OpenStack instance
     """
     console.print("Launching an OpenStack instance ... ")
     try:
-        conn = openstack.connect(
-            cloud="sunbeam"
-        )
+        conn = openstack.connect(cloud="sunbeam")
     except openstack.exceptions.SDKException:
         console.print(
-                "Unable to connect to OpenStack.",
-                " Is OpenStack running?",
-                " Have you run the configure command?",
-                " Do you have a clouds.yaml file?"
+            "Unable to connect to OpenStack.",
+            " Is OpenStack running?",
+            " Have you run the configure command?",
+            " Do you have a clouds.yaml file?",
         )
         return
 
@@ -124,7 +116,7 @@ def launch(
             image_id=image.id,
             flavor_id=flavor.id,
             networks=[{"uuid": network.id}],
-            key_name=keypair.name
+            key_name=keypair.name,
         )
 
         server = conn.compute.wait_for_server(server)
@@ -133,12 +125,8 @@ def launch(
     with console.status("Allocating IP address to instance ... "):
         external_network = conn.network.find_network("external-network")
         ip_ = conn.network.create_ip(floating_network_id=external_network.id)
-        conn.compute.add_floating_ip_to_server(
-            server_id,
-            ip_.floating_ip_address
-        )
+        conn.compute.add_floating_ip_to_server(server_id, ip_.floating_ip_address)
 
     console.print(
-            "Access instance with",
-            f"`ssh -i {key_path} ubuntu@{ip_.floating_ip_address}"
+        "Access instance with", f"`ssh -i {key_path} ubuntu@{ip_.floating_ip_address}"
     )
