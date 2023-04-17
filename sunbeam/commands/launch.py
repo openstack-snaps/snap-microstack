@@ -140,8 +140,6 @@ def launch(
         )
 
     console.print(
-        (
             "Access instance with",
             f"`ssh -i {key_path} ubuntu@{ip_.floating_ip_address}"
-        )
     )
