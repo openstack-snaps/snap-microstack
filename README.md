@@ -38,73 +38,7 @@ MicroStack is going in a whole new direction - in a good way! We've listened to 
 
 ## Quickstart (Sunbeam)
 
-Install pre-requisites:
-
-```bash
-sudo snap install microk8s --channel 1.25-strict/stable
-sudo microk8s enable dns hostpath-storage
-sudo microk8s enable metallb 10.20.20.1/29
-sudo snap install juju --channel 3.0/edge
-sudo microk8s status --wait-ready
-```
-
-Enable microk8s permissons
-
-```bash
-sudo usermod -a -G snap_microk8s ubuntu
-sudo chown -f -R ubuntu ~/.kube
-newgrp snap_microk8s
-```
-
-Install MicroStack from the sunbeam channel:
-
-```bash
-sudo snap install microstack --devmode --channel sunbeam/beta
-```
-
-Connect Microstack to Juju:
-
-```bash
-sudo snap connect microstack:juju-bin juju:juju-bin
-```
-
-Install OpenStack hypervisor snap
-
-```bash
-sudo snap install --channel yoga/edge openstack-hypervisor
-```
-
-Bootstrap the cloud and configure the OpenStack services. Note that this
-step may take some time (approx. 15 minutes or more).
-
-```bash
-microstack bootstrap
-```
-
-Configure the cloud with a standard set of images, flavors, networks etc. When
-this step has finished it will provide you with credentials that can be used
-for interacting with microstack.
-
-```bash
-microstack configure
-```
-
-To use OpenStack cli install the openstack clients snap and export the
-credentials provided in the previous step.
-
-```bash
-sudo snap install openstackclients
-# Replace the values below with those provided by the `microstack configure` step
-export OS_AUTH_URL=http://10.20.20.2:80/openstack-keystone
-export OS_USERNAME=demo
-export OS_PASSWORD=OFcjF2vEiKk5
-export OS_USER_DOMAIN_NAME=users
-export OS_PROJECT_DOMAIN_NAME=users
-export OS_PROJECT_NAME=demo
-export OS_AUTH_VERSION=3
-export OS_IDENTITY_API_VERSION=3
-openstack image list
-```
+Please refer to the [official tutorial][tutorial] for details on how to get started with Sunbeam.
 
 ## Quickstart (Beta)
 
@@ -191,3 +125,4 @@ Please report bugs to the [MicroStack][microstack] project on Launchpad.
 [snap-store-badge]: https://snapcraft.io/static/images/badges/en/snap-store-black.svg
 [snap-store-link]: https://snapcraft.io/microstack
 [microstack]: https://bugs.launchpad.net/microstack
+[tutorial]: https://discourse.ubuntu.com/t/install-and-configure-microstack-sunbeam-single-node
