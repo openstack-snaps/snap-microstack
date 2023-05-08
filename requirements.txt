@@ -6,6 +6,10 @@ rich # MIT
 # Set upper bound to match Juju 3.1.x series target
 juju<3.2 # Apache 2
 
+# Used in the launch command to launch an instance
+openstacksdk==0.61.*
+petname
+
 # Used for communication with snapd socket
 requests # Apache 2
 requests-unixsocket # Apache 2
